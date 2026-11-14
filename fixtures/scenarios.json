@@ -1,0 +1,289 @@
+[
+  {
+    "name": "parallel",
+    "routes": [
+      {
+        "path": "/log",
+        "body": {
+          "logId": "l1",
+          "globals": {
+            "approved": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          "classifiers": [
+            {
+              "name": "activity",
+              "keys": [
+                "concept:name",
+                "lifecycle:transition"
+              ]
+            }
+          ],
+          "fragments": [
+            "/fragment/1"
+          ],
+          "closed": true
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/fragment/1",
+        "body": {
+          "traces": [
+            {
+              "traceId": "t1",
+              "events": [
+                {
+                  "eventId": "e1",
+                  "attributes": {
+                    "concept:name": {
+                      "type": "string",
+                      "value": "review"
+                    },
+                    "lifecycle:transition": {
+                      "type": "string",
+                      "value": "complete"
+                    },
+                    "approved": {
+                      "type": "boolean",
+                      "value": false
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "traceId": "t1",
+        "eventId": "e1",
+        "attributes": {
+          "approved": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        "association": "unresolved"
+      }
+    ],
+    "forbidden": []
+  },
+  {
+    "name": "explicit-instance",
+    "routes": [
+      {
+        "path": "/log",
+        "body": {
+          "logId": "l2",
+          "globals": {},
+          "classifiers": [],
+          "fragments": [
+            "/fragment/1"
+          ],
+          "closed": true
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/fragment/1",
+        "body": {
+          "traces": [
+            {
+              "traceId": "t2",
+              "events": [
+                {
+                  "eventId": "e2",
+                  "attributes": {
+                    "concept:instance": {
+                      "type": "string",
+                      "value": "i1"
+                    },
+                    "lifecycle:transition": {
+                      "type": "string",
+                      "value": "start"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "traceId": "t2",
+        "eventId": "e2",
+        "executionId": "i1",
+        "association": "explicit"
+      }
+    ],
+    "forbidden": []
+  },
+  {
+    "name": "event-conflict",
+    "routes": [
+      {
+        "path": "/log",
+        "body": {
+          "logId": "l1",
+          "globals": {
+            "approved": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          "classifiers": [
+            {
+              "name": "activity",
+              "keys": [
+                "concept:name",
+                "lifecycle:transition"
+              ]
+            }
+          ],
+          "fragments": [
+            "/fragment/1"
+          ],
+          "closed": true
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/fragment/1",
+        "body": {
+          "traces": [
+            {
+              "traceId": "t1",
+              "events": [
+                {
+                  "eventId": "e1",
+                  "attributes": {
+                    "concept:name": {
+                      "type": "string",
+                      "value": "review"
+                    },
+                    "lifecycle:transition": {
+                      "type": "string",
+                      "value": "complete"
+                    },
+                    "approved": {
+                      "type": "boolean",
+                      "value": false
+                    }
+                  }
+                },
+                {
+                  "eventId": "e1",
+                  "attributes": {
+                    "concept:name": {
+                      "type": "string",
+                      "value": "review"
+                    },
+                    "lifecycle:transition": {
+                      "type": "string",
+                      "value": "complete"
+                    },
+                    "approved": {
+                      "type": "boolean",
+                      "value": true
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [],
+    "forbidden": [],
+    "complete": false
+  },
+  {
+    "name": "inherited-default",
+    "routes": [
+      {
+        "path": "/log",
+        "body": {
+          "logId": "l1",
+          "globals": {
+            "approved": {
+              "type": "boolean",
+              "value": true
+            }
+          },
+          "classifiers": [
+            {
+              "name": "activity",
+              "keys": [
+                "concept:name",
+                "lifecycle:transition"
+              ]
+            }
+          ],
+          "fragments": [
+            "/fragment/1"
+          ],
+          "closed": true
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/fragment/1",
+        "body": {
+          "traces": [
+            {
+              "traceId": "t1",
+              "events": [
+                {
+                  "eventId": "e1",
+                  "attributes": {
+                    "concept:name": {
+                      "type": "string",
+                      "value": "review"
+                    },
+                    "lifecycle:transition": {
+                      "type": "string",
+                      "value": "complete"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "traceId": "t1",
+        "eventId": "e1",
+        "attributes": {
+          "approved": {
+            "type": "boolean",
+            "value": true
+          }
+        }
+      }
+    ],
+    "forbidden": []
+  }
+]
