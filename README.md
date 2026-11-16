@@ -1,6 +1,6 @@
 # 流程日志的轨迹归属与生命周期资料接收
 
-这是资料接收服务的独立工作副本。当前版本支持人工摘要的领取、原文归档、重复导入和归档检查；新来源的业务行为尚未接入。
+这是资料接收服务的独立工作副本。当前版本支持人工摘要的领取、原文归档、重复导入和归档检查；`source` 模式已接入新来源：经真实 HTTP 接收日志分片，忠实保留轨迹、分类器、全局默认与事件实际覆盖值，并只按显式 `concept:instance` 确认执行关联。
 
 ## 环境
 
@@ -11,9 +11,9 @@ npm test
 npm run demo
 ```
 
-`npm test` 是初始产品的基线回归，验证现有摘要通路、原文摘要检查、本地来源响应，以及 CLI 在独立进程中的真实领取、重复导入和持久归档检查。该产品是一次执行后退出的采集程序，不提供常驻 HTTP 应用；`npm run collect` 执行领取，`npm run provider` 仅单独启动测试来源。
+`npm test` 是回归基线，验证现有摘要通路、原文摘要检查、本地来源响应、source 模式边界规则（不就近配对、缺阶段不记零耗时、覆盖与默认可区分、冲突留证、分片部分失败、重复领取不膨胀），以及 CLI 在独立进程中的真实领取、重复导入和持久归档检查。该产品是一次执行后退出的采集程序，不提供常驻 HTTP 应用；`npm run collect` 执行领取，`npm run provider` 仅单独启动测试来源。
 
-`npm run acceptance:source` 执行 `test/feature.test.mjs` 中完整的新来源验收。此命令在初始版本会以非零状态退出，原因是新的 source 模式尚待开发，不是环境故障，也不属于已有产品基线。验收文件及断言原样保留，没有跳过、删除或把失败转为成功。交付时需执行 `npm run verify:complete`，让基线和新来源验收同时通过；不能只用基线成功说明新功能已完成。
+`npm run acceptance:source` 执行 `test/feature.test.mjs` 中完整的新来源验收。交付时需执行 `npm run verify:complete`，让基线和新来源验收同时通过。
 
 ```sh
 npm run verify:complete
@@ -34,7 +34,8 @@ docker run --rm --network none acquisition-process-lifecycles:local npm run demo
 
 ## 工作入口
 
-- `src/collector.mjs` 的 `collect` 是业务入口；既有 `legacy` 模式要保留。
+- `src/collector.mjs` 的 `collect` 是业务入口；`legacy` 模式保留人工摘要通路，`source` 模式进入新来源解释。
+- `src/source.mjs` 实现分片领取、属性来源标注、显式执行关联、冲突留证与执行闭合回查（规则见 `docs/source-contract.md`）。
 - `src/transport.mjs` 提供原文字节与请求证据，错误状态由业务层判断。
 - `src/archive.mjs` 支持内容寻址原文与记录修订，存储位置由调用方传入。
 - `provider/server.mjs` 提供允许访问的本地合成来源，路径和例子见 `docs/source-contract.md`。
