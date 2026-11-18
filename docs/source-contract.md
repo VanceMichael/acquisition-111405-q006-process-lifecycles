@@ -10,7 +10,11 @@ GET /log 返回logId、globals(event属性默认值)、classifiers(名称及keys
 
 既有调用是 `collect({baseUrl, archive, mode})`。`mode` 默认为 `legacy`；新增来源使用 `source`。返回 `{records, complete, issues, evidenceCount}`：`records` 为本次业务结果，`complete` 表示本次领取及解释是否有未决缺口，`issues` 为带来源位置的可复核问题，`evidenceCount` 为实际接收的原文数。新结果可增加字段，示例不是封闭 schema。
 
-每个落库记录的 `id` 必须非空且稳定，由业务身份决定；业务所需的多身份关系不能都压缩进 `id`。`archive.commit` 接受 `records`、`exchanges` 与 `issues`；原文在 `raw/` 以 SHA-256 寻址，索引引用原文与记录修订。既有归档索引 schema=1 可以扩展，但旧摘要记录必须仍可读取。
+`source` 结果另含 `log`/`logs`（来源声明的 logId、globals、classifiers、fragments、closed）、`executions`（按 traceId 与 concept:instance 合并的闭合判断）、`unresolved`（未关联事件的汇总）、`conflicts`（同 eventId 冲突候选）、`receivedEvents`、`invalidEvents`、`empty`。每条记录另含 `attributeOrigins`（逐键 global/event）、`classification`（`derived: true` 的采集端推断）、`arrival`、`occurrences`、`provenance`（来源位置、原文摘要、来源事件原值）以及恒为 `null` 的 `duration`。
+
+`issues[].severity` 区分 `error`（构成解释缺口，令 `complete=false`）、`warning`（保留但需关注，例如执行尚未闭合、事件未关联）、`notice`（例如来源明确给出的空结果）。`suspend`/`resume` 原样保存，不计为开始或结束；缺失阶段不会被解释为耗时 0，也不会按时间最近配对。同一执行的闭合状态按整份归档跨领取合并，`executions[].evidence` 与 `issues` 中的原文摘要可回查该判断的依据。
+
+每个落库记录的 `id` 必须非空且稳定，由业务身份决定；本实现使用 `logId:traceId:eventId`，因为同名 `eventId` 只有与 `traceId` 一起才唯一确定一次来源事件，执行身份另由 `traceId` 与 `concept:instance` 表达，`executionKey` 保留两者关系而不压缩进 `id`。同一轨迹中同名 `eventId` 才有内容一致性要求；不同轨迹中的同名事件各自独立。`archive.commit` 接受 `records`、`exchanges`、`issues`、`logs` 与 `executions`；原文在 `raw/` 以 SHA-256 寻址，索引引用原文与记录修订。既有归档索引 schema=1 可以扩展，但旧摘要记录必须仍可读取。
 
 应用不得伪造原文，也不能把摘要模式当成新来源成功。HTTP 相对链接基于来源 origin 解析，不能访问其他站点。错误状态、缺数据和空的有效结果应区分。来源解释未决时 `complete=false`，已收的安全独立部分可以保留。
 
